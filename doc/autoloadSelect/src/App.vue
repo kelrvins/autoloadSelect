@@ -49,6 +49,10 @@ export default {
     },
     selectInput (val) {
       this.searchWorld = val
+      if (val.trim() === '') {
+        this.selectItemArr = []
+        return
+      }
       this.$http
         .get('https://www.easy-mock.com/mock/591c6b989aba4141cf25b708/step/itemDataArrSearch?sea=' + val)
         .then(response => {
