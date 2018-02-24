@@ -9,6 +9,7 @@
         :options="selectItemArr"
         placeholder="请选择"
         @load="getSelectItemArr"
+        @clear="clearSelect"
         @input="selectInput"
       ></Autoload>
     </p>
@@ -50,7 +51,7 @@ export default {
     selectInput (val) {
       this.searchWorld = val
       if (val.trim() === '') {
-        this.selectItemArr = []
+        this.clearSelect()
         return
       }
       this.$http
@@ -64,6 +65,12 @@ export default {
         .catch(error => {
           console.log(error)
         })
+    },
+    clearSelect () {
+      this.selectItem = ''
+      this.selectItemArr = []
+      this.searchWorld = ''
+      this.getSelectItemArr()
     }
   }
 }

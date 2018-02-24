@@ -3,9 +3,11 @@
   v-model="value"
   class="autoload"
   ref="elselect"
+  clearable
   filterable
   :filter-method="inputDect"
   @visible-change="visibleChange"
+  @clear="clearSelect"
   :placeholder="placeholder"
   size="mini"
   @change="changeChose" >
@@ -128,6 +130,9 @@ export default {
     },
     changeChose (val) {
       this.$emit('chose', val)
+    },
+    clearSelect () {
+      this.$emit('clear')
     }
   }
 }
