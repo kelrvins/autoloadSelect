@@ -20,7 +20,7 @@
 import Autoload from './components/autoloadSelect'
 
 export default {
-  name: 'App',
+  name: 'autoloadSelect',
   components: {
     Autoload
   },
@@ -41,7 +41,8 @@ export default {
         .then(response => {
           if (response.status === 200) {
             let item = response || []
-            this.selectItemArr = [...this.selectItemArr, ...item.data]
+            console.log(item.data.data.sea)
+            this.selectItemArr = [...this.selectItemArr, ...item.data.data.sea]
           }
         })
         .catch(error => {
