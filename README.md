@@ -1,6 +1,7 @@
 # autoloadSelect
 element的可搜索 select，添加自动加载
-![使用示例]('https://raw.githubusercontent.com/kelrvins/autoloadSelect/master/autoload.gif')
+
+![使用示例]('raw.githubusercontent.com/kelrvins/autoloadSelect/master/autoload.gif')
 ## usage
 > HTML
 ```
