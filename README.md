@@ -2,16 +2,17 @@
 element的可搜索 select，添加自动加载
 
 ## usage
-> html
+> HTML
 ```
 <Autoload 
   :text.sync="selectItem" 
   :options="selectItemArr" 
   placeholder="请选择"
-  @load="getSelectItemArr" 
+  @load="getSelectItemArr"
+  @input="selectInput"
 ></Autoload>
 ```
-> javascript
+> Javascript
 ```
 import Autoload from './autoloadSelect'
 export default {
@@ -26,7 +27,14 @@ export default {
     }
   },
   methods: {
+    // 获取可选项
     getSelectItemArr () {
+      /*
+        code
+      */
+    },
+    // 搜索选项
+    selectInput (val) {
       /*
         code
       */
