@@ -1,132 +1,243 @@
 <template>
-  <el-select
-  v-model="value" 
-  class="autoload" 
-  ref="elselect"
-  filterable
-  remote
-  :remote-method="inputDect"
-  @visible-change="visibleChange" 
-  :placeholder="placeholder" 
-  size="mini" 
-  @change="changeChose" >
-    <el-option  
-      ref="eloptionli"
-      v-for="item in optionsD"
-      :key="item.value"
-      :label="item.label"
-      :disabled="item.disabled||false"
-      :value="item.value">
-    </el-option>
-  </el-select>
+  <div class="el-select">
+    <el-select
+    v-model="value"
+    class="autoload"
+    ref="elselect"
+    clearable
+    filterable
+    :filter-method="inputDect"
+    @visible-change="visibleChange"
+    :disabled="isDisabled"
+    :placeholder="placeholder"
+    size="mini"
+    @clear="clearSelect"
+    @change="changeChose" >
+      <el-option
+        ref="eloptionli"
+        v-for="item in optionsD"
+        :key="item.value"
+        :label="item.label"
+        :disabled="item.disabled||false"
+        :value="item.value">
+      </el-option>
+    </el-select>
+  </div>
 </template>
 <script>
 export default {
   name: 'autoloadSelect',
   props: {
-    options: {
-      type: Array
+    dataUrl: '',
+    dataUrlParams: '',
+    dataLabel: '',
+    searchId: '',
+    searchName: '',
+    dataOptions: {
+      type: Array,
+      default() {
+        return []
+      }
     },
+    dataValue: '',
     text: {},
     placeholder: {
       type: String,
       default: '全部'
+    },
+    isDisabled: {
+      type: Boolean,
+      default: false
     }
   },
-  data () {
+  data() {
     return {
       loadFlag: true,
       value: this.text,
       optionsD: [],
       drop: '',
-      dropUl: ''
+      dropUl: '',
+      start: 0,
+      limit: 10,
+      selectLength: 0,
+      searchFlag: ''
     }
   },
-  mounted () {
-    // 可搜索的 select，加个箭头
-    this.$refs.elselect.$children[0].$el.childNodes[3].childNodes[0].children[0].className = 'el-select__caret el-input__icon el-icon-arrow-up'
+  mounted() {
+    this.getOptionName()
+    this.loadSelect()
   },
   watch: {
-    options (val, oldVal) {
-       // 新数据长度为0时，清空选项
-      if (val.length === 0) {
-        this.optionsD = []
-        this.optionsD.push({
-          label: '无数据',
-          value: 'load-item',
-          disabled: true
-        })
-        return
-      }
-      // 判断新旧数据是否相同，新数据长度比旧数据大时，替换为新数据
-      // 新数据长度大于10，旧数据长度为0时，添加不可点击的“已加载全部”标签
-      let _oldVal = JSON.stringify(oldVal),
-        _val = JSON.stringify(val)
-      if (val.length > oldVal.length && _oldVal !== _val) {
-        let _options = JSON.parse(_val)
-        this.$nextTick(() => {
-          this.optionsD = _options
-          this.visibleChange()
-          if (val.length < 10 && oldVal.length === 0) {
-            this.optionsD.push({
-              label: '已加载全部',
-              value: 'load-item',
-              disabled: true
-            })
-          }
-          this.loadFlag = true
-        })
-      } else if (this.optionsD.length > 0 && !this.loadFlag) {
-        this.optionsD[this.optionsD.length - 1].label = '已加载全部'
-        this.dropUl = this.$refs.eloptionli[0].$el.parentElement
-        this.drop = this.dropUl.parentElement
-        this.drop.scrollTop = this.dropUl.clientHeight - this.drop.clientHeight
-      }
+    dataOptions: {
+      handler(val, oldVal) {
+        if (val.length !== 0) {
+          this.optionsD = val
+        }
+      },
+      deep: true
     },
-    value (val) {
+    dataUrl(val, oldVal) {
+      this.start = 0
+      this.optionsD = []
+      this.loadSelect()
+    },
+    value(val) {
       this.$emit('update:text', val)
     },
-    text (val) {
+    text(val) {
       this.value = this.text
     }
   },
   methods: {
-    visibleChange () {
-      if (this.options.length === 0) {
-        return
-      }
+    visibleChange() {
       if (this.$refs.eloptionli && this.$refs.eloptionli[0]) {
         this.drop = this.$refs.eloptionli[0].$el.parentElement.parentElement
         this.dropUl = this.$refs.eloptionli[0].$el.parentElement
         this.drop.addEventListener('scroll', this.load)
       }
     },
-    inputDect (val) {
-      this.$emit('input', val)
+    inputDect(val) {
+      if (this.dataOptions.length > 0) {
+        return
+      }
+      const _this = this
+      clearTimeout(_this.searchFlag)
+      _this.searchFlag = setTimeout(function() {
+        _this.loadFlag = false
+        if (val === '') {
+          _this.start = 0
+          _this.optionsD = []
+          _this.loadSelect()
+        } else {
+          _this.inputSelect(val)
+        }
+      }, 1000)
     },
-    load () {
+    inputSelect(val) {
+      let $url = this.dataUrl + `?${this.searchName}=${val}`
+      if (this.dataUrlParams) {
+        $url = this.dataUrl + `?${this.dataUrlParams}&${this.searchName}=${val}`
+      }
+      this.$http
+        .get($url)
+        .then(res => {
+          this.loadFlag = true
+          if (res.status === 200) {
+            let data = res.data.itemList
+            this.optionsD = []
+            if (data.length > 0) {
+              data.forEach(el => {
+                this.optionsD.push({
+                  label: el[this.dataLabel],
+                  value: el[this.dataValue]
+                })
+              })
+            }
+          }
+        })
+        .catch(error => {
+          this.optionsD = []
+          this.loadFlag = true
+          this.$refs.errcatch.init(error)
+        })
+    },
+    load() {
       if (
         this.dropUl.clientHeight -
-        (this.drop.scrollTop + this.drop.clientHeight) <
-        30 &&
-        this.loadFlag
+          (this.drop.scrollTop + this.drop.clientHeight) <
+          30 &&
+        this.loadFlag &&
+        this.selectLength > this.start
       ) {
         let loadItem = {}
         loadItem.label = '加载中...'
         loadItem.value = 'load-item'
         loadItem.disabled = true
         this.optionsD.push(loadItem)
-        this.$emit('load')
         this.loadFlag = false
+        this.loadSelect()
       }
     },
-    changeChose (val) {
-      this.$emit('chose', val)
+    clearSelect() {
+      this.start = 0
+      this.optionsD = []
+      this.loadSelect()
+    },
+    changeChose(value) {
+      let label = ''
+      let labelObject = this.optionsD.filter(el => {
+        return el.value === value
+      })
+      if (labelObject.length > 0) {
+        label = labelObject[0].label
+      }
+      this.$emit('chose', value, label)
+    },
+    getOptionName() {
+      if (!this.text || !this.searchId) return
+      this.$http
+        .get(`${this.dataUrl}?${this.searchId}=${this.text}`)
+        .then(res => {
+          console.log(res)
+          let data = res.data.itemList
+          if (data.length > 0) {
+            data.forEach(el => {
+              this.optionsD.push({
+                label: el[this.dataLabel],
+                value: el[this.dataValue]
+              })
+            })
+          }
+        })
+        .catch(error => {
+          console.log(error)
+        })
+    },
+    loadSelect() {
+      if (this.dataOptions.length > 0 || !this.dataUrl) {
+        return
+      }
+      let $url = `${this.dataUrl}?limit=${this.limit}&start=${this.start}`
+      if (this.dataUrlParams) {
+        $url = `${this.dataUrl}?${this.dataUrlParams}&limit=${
+          this.limit
+        }&start=${this.start}`
+      }
+      this.$http
+        .get($url)
+        .then(res => {
+          this.loadFlag = true
+          if (res.status === 200) {
+            this.selectLength = res.data.totalCount
+            let data = res.data.itemList
+            if (data.length > 0) {
+              this.optionsD.pop()
+              data.forEach(el => {
+                this.optionsD.push({
+                  label: el[this.dataLabel],
+                  value: el[this.dataValue]
+                })
+              })
+              this.start += 10
+              if (this.selectLength <= this.start) {
+                this.optionsD.push({
+                  label: '已加载全部',
+                  value: 'load-item',
+                  disabled: true
+                })
+              }
+            }
+          }
+        })
+        .catch(error => {
+          console.log(error)
+          this.loadFlag = true
+        })
     }
   }
 }
 </script>
-<style lang="less">
+<style lang="less" scoped>
 .autoload {
   margin: 0;
   input-placeholder {

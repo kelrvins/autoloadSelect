@@ -1,17 +1,22 @@
 <template>
   <div id="app">
     <img src="./assets/logo.png">
-    <p>search world: {{searchWorld}}</p>
+    <p class="connet-logo">&</p>
+    <img src="./assets/element.png">
     <p>select value: {{selectItem}}</p>
     <p>
       <Autoload
         :text.sync="selectItem"
-        :options="selectItemArr"
-        placeholder="请选择"
-        @load="getSelectItemArr"
-        @clear="clearSelect"
-        @input="selectInput"
-      ></Autoload>
+        :isDisabled="isDisabled"
+        :dataUrl="dataUrl"
+        :dataUrlParams="dataUrlParams"
+        :searchName="searchName"
+        :dataOptions="dataOptions"
+        :dataLabel="dataLabel"
+        :dataValue="dataValue"
+        @chose="choseAdd"
+        :placeholder="placeholder">
+      </Autoload>
     </p>
   </div>
 </template>
@@ -24,60 +29,36 @@ export default {
   components: {
     Autoload
   },
-  data () {
+  data() {
     return {
+      // 数据 url,当 dataOptions 为空时必传
+      dataUrl:
+        'https://www.easy-mock.com/mock/591c6b989aba4141cf25b708/step/itemDataArr1',
+      // 当前选中
       selectItem: '',
-      selectItemArr: [],
-      searchWorld: ' '
+      // 搜索时用的字段名
+      searchName: '',
+      // 数据中用作 select 中 label 的字段名
+      dataLabel: 'label',
+      // 数据中用作 select 中 value 的字段名
+      dataValue: 'value',
+      // 传递固定选项，不使用滚动加载功能
+      dataOptions: [],
+      // 是否禁用
+      isDisabled: false,
+      // 数据 url 固定使用的 query
+      dataUrlParams: '',
+      // placeholder
+      placeholder: '请选择'
     }
-  },
-  mounted () {
-    this.getSelectItemArr()
   },
   methods: {
-    getSelectItemArr () {
-      this.$http
-        .get('https://www.easy-mock.com/mock/591c6b989aba4141cf25b708/step/itemDataArr1')
-        .then(response => {
-          if (response.status === 200) {
-            let item = response || []
-            console.log(item.data.data.sea)
-            this.selectItemArr = [...this.selectItemArr, ...item.data.data.sea]
-          }
-        })
-        .catch(error => {
-          console.log(error)
-        })
-    },
-    selectInput (val) {
-      this.searchWorld = val
-      if (val.trim() === '') {
-        this.clearSelect()
-        return
-      }
-      this.$http
-        .get('https://www.easy-mock.com/mock/591c6b989aba4141cf25b708/step/itemDataArrSearch?sea=' + val)
-        .then(response => {
-          if (response.status === 200) {
-            let item = response || []
-            this.selectItemArr = item.data.data.sea
-          }
-        })
-        .catch(error => {
-          console.log(error)
-        })
-    },
-    clearSelect () {
-      this.selectItem = ''
-      this.selectItemArr = []
-      this.searchWorld = ''
-      this.getSelectItemArr()
-    }
+    choseAdd() {}
   }
 }
 </script>
 
-<style>
+<style lang="less">
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -85,5 +66,9 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+  .connet-logo{
+    font-size: 25px;
+    font-weight: bold;
+  }
 }
 </style>
